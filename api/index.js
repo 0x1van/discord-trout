@@ -4,6 +4,9 @@ const {
   verifyKey,
 } = require('discord-interactions');
 const getRawBody = require('raw-body');
+const openai = require('openai');
+
+openai.apiKey = process.env.OPENAI_API_KEY;
 
 const SLAP_COMMAND = {
   name: 'Slap',
@@ -28,13 +31,21 @@ const SUPPORT_COMMAND = {
   description: 'Like this bot? Support me!',
 };
 
+const GPT3_COMMAND = {
+  name: 'gpt3',
+  description: 'Ask GPT-3 anything',
+  options: [
+    {
+      name: 'question',
+      description: 'The question to ask GPT-3',
+      type: 3,
+      required: true,
+    },
+  ],
+};
+
 const INVITE_URL = `https://discord.com/oauth2/authorize?client_id=${process.env.APPLICATION_ID}&scope=applications.commands`;
 
-/**
- * Gotta see someone 'bout a trout
- * @param {VercelRequest} request
- * @param {VercelResponse} response
- */
 module.exports = async (request, response) => {
   if (request.method === 'POST') {
     const signature = request.headers['x-signature-ed25519'];
@@ -91,6 +102,31 @@ module.exports = async (request, response) => {
             },
           });
           console.log('Support request');
+          break;
+        case GPT3_COMMAND.name.toLowerCase():
+          const question = message.data.options.find(
+            (option) => option.name === 'question'
+          ).value;
+  
+          try {
+            const gpt3Response = await openai.Completion.create({
+              engine: 'text-davinci-002',
+              prompt: question,
+              max_tokens: 100,
+            });
+  
+            response.status(200).send({
+              type: 4,
+              data: {
+                content: gpt3Response.choices[0].text.strip(),
+              },
+            });
+          } catch (err) {
+            console.error(err);
+            response.status(500).send({ error: 'Error generating GPT-3 response' });
+          }
+  
+          console.log('GPT-3 Request');
           break;
         default:
           console.error('Unknown Command');
