@@ -21,6 +21,6 @@
     "discord-interactions": "^2.0.2",
     "dotenv": "^8.2.0",
     "raw-body": "^2.4.1",
-    "openai": "^3.3.0",
+    "openai": "^3.3.0"
   }
 }
